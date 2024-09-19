@@ -6,7 +6,7 @@ import (
   "strconv"
   "strings"
   "os/exec"
-  "github.com/benhoyt/goawk/interp"
+  "github.com/go-ini/ini"
 )
 
 var (
@@ -57,22 +57,22 @@ func getKernel(cmd string, args string){
   fmt.Println(string(out[:]))
 }
 
-func getDistroName(){
-  out:= exec.Command("lsb_release", "-d")
-
-  err := interp.Exec("$0 { print $1 }", " ", out, nil)
+func getDistroName(configfile string) map[string]string {
+  cfg, err := ini.Load(configfile)
   if err != nil {
-    fmt.Println(err)
-    return
+    fmt.Printf("Fail to read file: ", err)
   }
 
-  fmt.Println(string(out[:]))
+  ConfigParams := make(map[string]string)
+  ConfigParams["PRETTY_NAME"] = cfg.Section("").Key("PRETTY_NAME").String()
+
+  return ConfigParams
 }
 
 func getPackages(cmd string, args string){
   out, err := exec.Command(cmd, args).Output()
 
-  package_managers := [...]string{"pacman", "emerge", "apt", "xbps-install", "apk", "port", "nix", "dnf", "rpm", "pkg"}
+  // package_managers := [...]string{"pacman", "emerge", "apt", "xbps-install", "apk", "port", "nix", "dnf", "rpm", "pkg"}
 
   if err != nil {
     fmt.Printf("%s", err)
@@ -82,5 +82,8 @@ func getPackages(cmd string, args string){
 }
 
 func main() {
-  getDistroName()
+  getKernel("uname", "-a")
+  OSInfo := getDistroName("/etc/os-release")
+  OSRelease := OSInfo["PRETTY_NAME"]
+  fmt.Print(OSRelease)
 }
