@@ -1,12 +1,13 @@
-/* This is a rewrite of rxfetch in golang */ 
-package main 
+/* This is a rewrite of rxfetch in golang */
+package main
 
 import (
-  "fmt"
-  "strconv"
-  "strings"
-  "os/exec"
-  "github.com/go-ini/ini"
+	"fmt"
+	"os/exec"
+	"strconv"
+	"strings"
+
+	"github.com/go-ini/ini"
 )
 
 var (
@@ -49,67 +50,67 @@ func Color(input interface{}, color ...string) string {
 }
 
 func getDistroName(configfile string) map[string]string {
-  cfg, err := ini.Load(configfile)
-  if err != nil {
-    fmt.Printf("Fail to read file: ", err)
-  }
+	cfg, err := ini.Load(configfile)
+	if err != nil {
+		fmt.Printf("Fail to read file: ", err)
+	}
 
-  ConfigParams := make(map[string]string)
-  ConfigParams["PRETTY_NAME"] = cfg.Section("").Key("PRETTY_NAME").String()
+	ConfigParams := make(map[string]string)
+	ConfigParams["PRETTY_NAME"] = cfg.Section("").Key("PRETTY_NAME").String()
 
-  return ConfigParams
+	return ConfigParams
 }
 
-func runCommand(cmd string, args string){
-  run := exec.Command(cmd, args)
-  out, err := run.CombinedOutput()
+func runCommand(cmd string, args string) {
+	run := exec.Command(cmd, args)
+	out, err := run.CombinedOutput()
 
-  if err != nil {
-    fmt.Println(fmt.Sprint(err) + ": " + string(out))
-    return
-  }
-  fmt.Println(string(out[:]))
+	if err != nil {
+		fmt.Println(fmt.Sprint(err) + ": " + string(out))
+		return
+	}
+	fmt.Println(string(out[:]))
 }
 
-func getPackages(){
-  package_managers := [...]string{"pacman", "emerge", "apt", "xbps-install", "apk", "port", "nix", "dnf", "rpm", "pkg", "eopkg"}
+func getPackages() {
+	package_managers := [...]string{"pacman", "emerge", "apt", "xbps-install", "apk", "port", "nix", "dnf", "rpm", "pkg", "eopkg"}
 
-  for _, pm := range package_managers {
-    out, err := exec.Command("which", pm).Output()
+	for _, pm := range package_managers {
+		out, err := exec.Command("which", pm).Output()
 
-    // gpt code here
-    if err != nil {
+		// gpt code here
+		if err != nil {
 			if exitError, ok := err.(*exec.ExitError); ok {
 				if exitError.ExitCode() == 1 {
-					continue 
+					continue
 				}
 			}
 			fmt.Printf("Error checking for %s: %s\n", pm, err)
 			continue
 		}
 
-    if strings.TrimSpace(string(out)) == "/usr/bin/"+pm {
-      switch pm {
-        case "pacman":
-          runCommand("pacman", "-Q")
-        case "xbps-install":
-          runCommand("xbps-query", "-l")
-        case "rpm":
-          runCommand("rpm", "-qa")
-        case "emerge":
-          runCommand("qlist", "-l")
-        default:
-          fmt.Println("gobrrr")
-      }
-    }
-  }
+		if strings.TrimSpace(string(out)) == "/usr/bin/"+pm {
+			switch pm {
+			case "pacman":
+				runCommand("pacman", "-Q")
+			case "xbps-install":
+				runCommand("xbps-query", "-l")
+			case "rpm":
+				runCommand("rpm", "-qa")
+			case "emerge":
+				runCommand("qlist", "-l")
+			default:
+				fmt.Println("gobrrr")
+			}
+		}
+	}
 }
 
 func main() {
-  runCommand("uname", "-a")
-  OSInfo := getDistroName("/etc/os-release")
-  OSRelease := OSInfo["PRETTY_NAME"]
-  fmt.Print(OSRelease, "\n")
+	runCommand("uname", "-a")
+	OSInfo := getDistroName("/etc/os-release")
+	OSRelease := OSInfo["PRETTY_NAME"]
+	fmt.Print(OSRelease, "\n")
 
-  getPackages()
+	getPackages()
 }
