@@ -48,15 +48,6 @@ func Color(input interface{}, color ...string) string {
 	return s
 }
 
-// This function will define the further use of commands as the kernel type will make changes in the type of OS. 
-func getKernel(cmd string, args string){
-  out, err := exec.Command(cmd).Output()
-  if err != nil {
-    fmt.Printf("%s", err)
-  }
-  fmt.Println(string(out[:]))
-}
-
 func getDistroName(configfile string) map[string]string {
   cfg, err := ini.Load(configfile)
   if err != nil {
@@ -69,21 +60,50 @@ func getDistroName(configfile string) map[string]string {
   return ConfigParams
 }
 
-func getPackages(cmd string, args string){
-  out, err := exec.Command(cmd, args).Output()
-
-  // package_managers := [...]string{"pacman", "emerge", "apt", "xbps-install", "apk", "port", "nix", "dnf", "rpm", "pkg"}
+func runCommand(cmd string, args string){
+  run := exec.Command(cmd, args)
+  out, err := run.CombinedOutput()
 
   if err != nil {
-    fmt.Printf("%s", err)
+    fmt.Println(fmt.Sprint(err) + ": " + string(out))
+    return
   }
-
   fmt.Println(string(out[:]))
 }
 
+func getPackages(){
+  package_managers := [...]string{"pacman", "emerge", "apt", "xbps-install", "apk", "port", "nix", "dnf", "rpm", "pkg"}
+
+  for _, pm := range package_managers {
+    out, err := exec.Command("which", pm).Output()
+
+    // gpt code here
+    if err != nil {
+			if exitError, ok := err.(*exec.ExitError); ok {
+				if exitError.ExitCode() == 1 {
+					continue 
+				}
+			}
+			fmt.Printf("Error checking for %s: %s\n", pm, err)
+			continue
+		}
+
+    if strings.TrimSpace(string(out)) == "/usr/bin/"+pm {
+      switch pm {
+        case "pacman":
+          runCommand("pacman", "-Q")
+        default:
+          fmt.Println("gobrrr")
+      }
+    }
+  }
+}
+
 func main() {
-  getKernel("uname", "-a")
+  runCommand("uname", "-a")
   OSInfo := getDistroName("/etc/os-release")
   OSRelease := OSInfo["PRETTY_NAME"]
-  fmt.Print(OSRelease)
+  fmt.Print(OSRelease, "\n")
+
+  getPackages()
 }
