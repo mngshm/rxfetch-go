@@ -72,7 +72,7 @@ func runCommand(cmd string, args string){
 }
 
 func getPackages(){
-  package_managers := [...]string{"pacman", "emerge", "apt", "xbps-install", "apk", "port", "nix", "dnf", "rpm", "pkg"}
+  package_managers := [...]string{"pacman", "emerge", "apt", "xbps-install", "apk", "port", "nix", "dnf", "rpm", "pkg", "eopkg"}
 
   for _, pm := range package_managers {
     out, err := exec.Command("which", pm).Output()
@@ -92,6 +92,12 @@ func getPackages(){
       switch pm {
         case "pacman":
           runCommand("pacman", "-Q")
+        case "xbps-install":
+          runCommand("xbps-query", "-l")
+        case "rpm":
+          runCommand("rpm", "-qa")
+        case "emerge":
+          runCommand("qlist", "-l")
         default:
           fmt.Println("gobrrr")
       }
